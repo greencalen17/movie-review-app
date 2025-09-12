@@ -1,2 +1,4 @@
 node_modules/
 **/.env
+# Ignore node_modules everywhere
+**/node_modules/
