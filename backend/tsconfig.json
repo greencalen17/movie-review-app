@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    /* File Layout */
+    "rootDir": "./",                 /* Where TS looks for source files */
+    "outDir": "./dist",              /* Where compiled JS goes */
+
+    /* Environment */
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node"],               /* Enable Node.js types */
+    "lib": ["ESNext"],
+
+    /* Outputs */
+    "sourceMap": true,
+
+    /* Type Safety */
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
