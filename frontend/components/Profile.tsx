@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, Image, Dimensions } from "react-native";
+import {
+    View,
+    Text,
+    ActivityIndicator,
+    StyleSheet,
+    Image,
+    Dimensions,
+    FlatList,
+} from "react-native";
 import { ObjectId } from "bson";
 
 interface User {
@@ -7,7 +15,7 @@ interface User {
     bio: string;
     created_at: Date;
     email: string;
-    favorite_movie: ObjectId;
+    favorite_movies: Array<ObjectId>;
     first_name: string;
     last_name: string;
     phone: string;
@@ -17,22 +25,28 @@ interface User {
     _id: ObjectId;
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window"); // ✅ Get screen width
-const PROFILE_PIC_DIMENSIONS = SCREEN_HEIGHT * 0.1; // proportional profile pic
-const POSTER_WIDTH = SCREEN_WIDTH / 6; // 
-const POSTER_HEIGHT = SCREEN_WIDTH / 4; // typical movie poster ratio (2:3)
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// ✅ Poster sizing
+const PROFILE_PIC_DIMENSIONS = SCREEN_HEIGHT * 0.1;
+const MAIN_POSTER_WIDTH = SCREEN_WIDTH / 4.5;
+const MAIN_POSTER_HEIGHT = SCREEN_WIDTH / 3;
+const GRID_POSTER_WIDTH = SCREEN_WIDTH / 7.5;
+const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 5;
 
 function ProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
-    const [favoriteMovie, setFavoriteMovie] = useState<any>(null);
+    const [topTenMovies, setTopTenMovies] = useState<Array<any>>([]);
 
     const email = "greencalen3@gmail.com"; // hardcoded for now
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const userResponse = await fetch(`http://localhost:5000/users/getUserByEmail/${email}`);
+                const userResponse = await fetch(
+                    `http://localhost:5000/users/getUserByEmail/${email}`
+                );
                 if (!userResponse.ok) throw new Error("User not found");
                 const userData = await userResponse.json();
                 console.log("Fetched user:", userData);
@@ -48,15 +62,20 @@ function ProfileScreen() {
     useEffect(() => {
         const fetchFavMovie = async () => {
             try {
-                if (!user?.favorite_movie) return;
+                if (!user?.favorite_movies) return;
                 setLoading(true);
-                const favMovieResponse = await fetch(
-                    `http://localhost:5000/movies/getMovieById/${user.favorite_movie}`
-                );
-                if (!favMovieResponse.ok) throw new Error("Fav movie not found");
-                const favMovieData = await favMovieResponse.json();
-                console.log("Fetched fav movie:", favMovieData);
-                setFavoriteMovie(favMovieData);
+                let favMovies = [];
+                for (const movieId of user.favorite_movies) {
+                    const favMovieResponse = await fetch(
+                        `http://localhost:5000/movies/getMovieById/${movieId}`
+                    );
+                    if (!favMovieResponse.ok)
+                        throw new Error("Fav movie not found");
+                    const favMovieData = await favMovieResponse.json();
+                    console.log("Fetched fav movie:", favMovieData);
+                    favMovies.push(favMovieData);
+                }
+                setTopTenMovies(favMovies);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -83,12 +102,22 @@ function ProfileScreen() {
         );
     }
 
+    const renderGridItem = ({ item }: { item: any }) => (
+        <Image
+            source={{ uri: item.Poster }}
+            style={styles.gridPoster}
+        />
+    );
+
     return (
         <View style={styles.container}>
             {/* Profile Picture & Info */}
             <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
                 {user.profile_pic && (
-                    <Image source={{ uri: user.profile_pic }} style={styles.profileImage} />
+                    <Image
+                        source={{ uri: user.profile_pic }}
+                        style={styles.profileImage}
+                    />
                 )}
 
                 <View style={styles.textContainer}>
@@ -101,12 +130,27 @@ function ProfileScreen() {
             </View>
 
             {/* Favorite Movie Section */}
-            {favoriteMovie && (
+            {topTenMovies.length > 0 && (
                 <View style={styles.favoriteMovieContainer}>
-                    <Text style={styles.favoriteMovieTitle}>Favorite Films</Text>
-                    {favoriteMovie.Poster && (
-                        <Image source={{ uri: favoriteMovie.Poster }} style={styles.favoriteMoviePoster} />
+                    {/* Main Favorite Poster */}
+                    {topTenMovies[0].Poster && (
+                        <Image
+                            source={{ uri: topTenMovies[0].Poster }}
+                            style={styles.favoriteMoviePoster}
+                        />
                     )}
+
+                    {/* Grid of Remaining Movies */}
+                    <FlatList
+                        data={topTenMovies.slice(1)} // skip first movie
+                        renderItem={renderGridItem}
+                        keyExtractor={(item, index) =>
+                            item._id?.$oid ?? index.toString()
+                        }
+                        numColumns={3}
+                        scrollEnabled={false} // prevents nested scrolling
+                        contentContainerStyle={styles.gridContainer}
+                    />
                 </View>
             )}
         </View>
@@ -140,18 +184,24 @@ const styles = StyleSheet.create({
     },
     favoriteMovieContainer: {
         marginTop: 30,
-        alignItems: "center", // ✅ centers content horizontally
-    },
-    favoriteMovieTitle: {
-        fontSize: 22,
-        fontWeight: "bold",
-        marginBottom: 10,
-        textAlign: "center",
+        alignItems: "center",
     },
     favoriteMoviePoster: {
-        width: POSTER_WIDTH,
-        height: POSTER_HEIGHT,
-        borderRadius: POSTER_WIDTH * 0.05,
+        width: MAIN_POSTER_WIDTH,
+        height: MAIN_POSTER_HEIGHT,
+        borderRadius: 8,
+        resizeMode: "cover",
+        marginBottom: 15,
+    },
+    gridContainer: {
+        gap: SCREEN_HEIGHT / 25, // ✅ spacing between grid items (RN 0.71+)
+        justifyContent: "center",
+    },
+    gridPoster: {
+        width: GRID_POSTER_WIDTH,
+        height: GRID_POSTER_HEIGHT,
+        borderRadius: 6,
+        margin: 5,
         resizeMode: "cover",
     },
     center: {
