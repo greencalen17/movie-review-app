@@ -17,30 +17,30 @@ function AddReviewScreen() {
 export default function App() {
     return (
         <NavigationContainer>
-        <Tab.Navigator
-            screenOptions={{
-            headerShown: false,
-            tabBarLabelStyle: { fontSize: 14 },
-            tabBarStyle: { height: 60 },
-            }}
-        >
-            <Tab.Screen
-            name="Movies"
-            component={AddReviewScreen}
-            options={{
-                tabBarLabel: "Movies",
-                tabBarIcon: () => <Text style={{ fontSize: 18 }}>🎬</Text>, // 👈 replaces arrow
-            }}
-            />
-            <Tab.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{
-                tabBarLabel: "Profile",
-                tabBarIcon: () => <Text style={{ fontSize: 18 }}>👤</Text>,
-            }}
-            />
-        </Tab.Navigator>
+            <Tab.Navigator
+                screenOptions={{
+                headerShown: false,
+                tabBarLabelStyle: { fontSize: 14 },
+                tabBarStyle: { height: 60 },
+                }}
+            >
+                <Tab.Screen
+                name="Movies"
+                component={AddReviewScreen}
+                options={{
+                    tabBarLabel: "Movies",
+                    tabBarIcon: () => <Text style={{ fontSize: 18 }}>🎬</Text>, // 👈 replaces arrow
+                }}
+                />
+                <Tab.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{
+                    tabBarLabel: "Profile",
+                    tabBarIcon: () => <Text style={{ fontSize: 18 }}>👤</Text>,
+                }}
+                />
+            </Tab.Navigator>
         </NavigationContainer>
     );
 }
