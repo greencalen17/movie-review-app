@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "movie-reviews-frontend",
+    "slug": "movie-reviews-frontend",
+    "version": "1.0.0",
+    "sdkVersion": "51.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.calengreen.moviereview"
+    }
+  }
+}
