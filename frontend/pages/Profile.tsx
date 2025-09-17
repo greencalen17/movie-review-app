@@ -30,9 +30,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 // ✅ Poster sizing
 const PROFILE_PIC_DIMENSIONS = SCREEN_HEIGHT * 0.1;
 const MAIN_POSTER_WIDTH = SCREEN_WIDTH / 4.5;
-const MAIN_POSTER_HEIGHT = SCREEN_WIDTH / 3;
-const GRID_POSTER_WIDTH = SCREEN_WIDTH / 7.5;
-const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 5;
+const MAIN_POSTER_HEIGHT = SCREEN_WIDTH / 3; 
+const GRID_POSTER_WIDTH = SCREEN_WIDTH / 6;
+const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 4; // maintain aspect ratio
 
 function ProfileScreen() {
     const [loading, setLoading] = useState(true);
@@ -40,12 +40,14 @@ function ProfileScreen() {
     const [topTenMovies, setTopTenMovies] = useState<Array<any>>([]);
 
     const email = "greencalen3@gmail.com"; // hardcoded for now
+    const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
+                setLoading(true);
                 const userResponse = await fetch(
-                    `http://localhost:5000/users/getUserByEmail/${email}`
+                    `${BASE_URL}/users/getUserByEmail/${email}`
                 );
                 if (!userResponse.ok) throw new Error("User not found");
                 const userData = await userResponse.json();
@@ -53,6 +55,7 @@ function ProfileScreen() {
                 setUser(userData);
             } catch (err) {
                 console.error(err);
+                console.log("Failed to fetch user data");
             }
         };
 
@@ -67,7 +70,7 @@ function ProfileScreen() {
                 let favMovies = [];
                 for (const movieId of user.favorite_movies) {
                     const favMovieResponse = await fetch(
-                        `http://localhost:5000/movies/getMovieById/${movieId}`
+                        `${BASE_URL}/movies/getMovieById/${movieId}`
                     );
                     if (!favMovieResponse.ok)
                         throw new Error("Fav movie not found");
@@ -78,6 +81,7 @@ function ProfileScreen() {
                 setTopTenMovies(favMovies);
             } catch (err) {
                 console.error(err);
+                console.log("Failed to fetch favorite movies");
             } finally {
                 setLoading(false);
             }
@@ -132,33 +136,56 @@ function ProfileScreen() {
             {/* Favorite Movie Section */}
             {topTenMovies.length > 0 && (
                 <View style={styles.favoriteMovieContainer}>
-                    {/* Main Favorite Poster */}
-                    {topTenMovies[0].Poster && (
+                    {/* Row 1 - Main Favorite Poster */}
+                    {topTenMovies[0] && (
                         <Image
                             source={{ uri: topTenMovies[0].Poster }}
                             style={styles.favoriteMoviePoster}
                         />
                     )}
 
-                    {/* Grid of Remaining Movies */}
-                    <FlatList
-                        data={topTenMovies.slice(1)} // skip first movie
-                        renderItem={renderGridItem}
-                        keyExtractor={(item, index) =>
-                            item._id?.$oid ?? index.toString()
-                        }
-                        numColumns={3}
-                        scrollEnabled={false} // prevents nested scrolling
-                        contentContainerStyle={styles.gridContainer}
-                    />
+                    {/* Row 2 - 2 posters */}
+                    <View style={styles.pyramidRow}>
+                        {topTenMovies.slice(1, 3).map((movie, index) => (
+                            <Image
+                                key={movie._id?.$oid ?? `row2-${index}`}
+                                source={{ uri: movie.Poster }}
+                                style={styles.gridPoster}
+                            />
+                        ))}
+                    </View>
+
+                    {/* Row 3 - 3 posters */}
+                    <View style={styles.pyramidRow}>
+                        {topTenMovies.slice(3, 6).map((movie, index) => (
+                            <Image
+                                key={movie._id?.$oid ?? `row3-${index}`}
+                                source={{ uri: movie.Poster }}
+                                style={styles.gridPoster}
+                            />
+                        ))}
+                    </View>
+
+                    {/* Row 4 - 4 posters */}
+                    <View style={styles.pyramidRow}>
+                        {topTenMovies.slice(6, 10).map((movie, index) => (
+                            <Image
+                                key={movie._id?.$oid ?? `row4-${index}`}
+                                source={{ uri: movie.Poster }}
+                                style={styles.gridPoster}
+                            />
+                        ))}
+                    </View>
                 </View>
             )}
         </View>
     );
+
 }
 
 const styles = StyleSheet.create({
     container: {
+        marginTop: SCREEN_HEIGHT / 20,
         flex: 1,
         padding: 20,
     },
@@ -191,17 +218,30 @@ const styles = StyleSheet.create({
         height: MAIN_POSTER_HEIGHT,
         borderRadius: 8,
         resizeMode: "cover",
-        marginBottom: 15,
+        marginBottom: SCREEN_HEIGHT / 40,
     },
     gridContainer: {
-        gap: SCREEN_HEIGHT / 25, // ✅ spacing between grid items (RN 0.71+)
-        justifyContent: "center",
+        alignItems: "center",
+        alignSelf: "center",  // centers entire grid horizontally
+        paddingVertical: 5,
     },
+
+    pyramidRow: {
+        flexDirection: "row",
+        justifyContent: "center", // centers posters horizontally
+        marginBottom: SCREEN_HEIGHT / 80, // vertical spacing between rows
+    },
+
+    gridRow: {
+        justifyContent: "center",  // 👈 centers each row horizontally
+    },
+
     gridPoster: {
         width: GRID_POSTER_WIDTH,
         height: GRID_POSTER_HEIGHT,
         borderRadius: 6,
-        margin: 5,
+        marginHorizontal: SCREEN_WIDTH / 60,  // horizontal spacing
+        marginBottom: SCREEN_HEIGHT / 80,     // smaller vertical gap
         resizeMode: "cover",
     },
     center: {

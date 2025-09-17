@@ -21,6 +21,25 @@ async function connectDB() {
     return db;
 }
 
+// GET /all movies
+router.get("/all-movies", async (req: Request, res: Response) => {
+    try {
+        const database = await connectDB();
+        const movies = database.collection("Movies");
+
+        const allMovies = await movies.find().toArray();
+
+        if (!allMovies) {
+            return res.status(404).json({ error: "Movies not found" });
+        }
+        console.log("Fetched movies:", allMovies);
+        res.json(allMovies);
+    } catch (error) {
+        console.error("Error in GET /movies/all-movies:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
 // GET /movie/:_id
 router.get("/getMovieById/:_id", async (req: Request, res: Response) => {
     try {
