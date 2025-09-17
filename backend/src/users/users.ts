@@ -33,7 +33,7 @@ router.get("/getUserByEmail/:email", async (req: Request, res: Response) => {
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        console.log("Fetched user:", user);
+
         res.json(user);
     } catch (error) {
         console.error("Error in GET /users/getUserByEmail/:email:", error);
