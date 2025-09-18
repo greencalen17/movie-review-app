@@ -5,8 +5,25 @@ import { View, Text, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import ProfileScreen from "./pages/Profile";
 import MoviesScreen from "./pages/Movies";
+import MovieDetailsScreen from "./components/movie-details";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export type RootStackParamList = {
+    Movies: undefined;
+    MovieDetails: { movieId: string };
+};
+
+function MoviesStack() {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Movies" component={MoviesScreen} />
+            <Stack.Screen name="MovieDetails" component={MovieDetailsScreen} />
+        </Stack.Navigator>
+    );
+}
 
 export default function App() {
     return (
@@ -17,14 +34,14 @@ export default function App() {
                         headerShown: false,
                         tabBarLabelStyle: { fontSize: 14 },
                         tabBarStyle: {
-                            height: Platform.OS === "ios" ? 80 : 70, // ✅ give more space instead of cutting off
-                            paddingBottom: Platform.OS === "ios" ? 20 : 10, // ✅ ensures icons/text aren't clipped
+                            height: Platform.OS === "ios" ? 80 : 70,
+                            paddingBottom: Platform.OS === "ios" ? 20 : 10,
                         },
                     }}
                 >
                     <Tab.Screen
-                        name="Movies"
-                        component={MoviesScreen}
+                        name="MoviesTab"
+                        component={MoviesStack} // ✅ use stack here
                         options={{
                             tabBarLabel: "Movies",
                             tabBarIcon: () => <Text style={{ fontSize: 18 }}>🎬</Text>,

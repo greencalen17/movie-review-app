@@ -4,11 +4,15 @@ import {
     Text,
     ActivityIndicator,
     StyleSheet,
+    TouchableOpacity,
     Image,
     Dimensions,
     FlatList,
 } from "react-native";
 import { ObjectId } from "bson";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "App";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -34,12 +38,20 @@ export interface Movie {
     imdbID: string,
     Type: string,
     Cast: Array<string>,
+    Banner?: string,
+    Trailer?: string,
 }
+
+type MoviesScreenNavigationProp = NativeStackNavigationProp<
+    RootStackParamList,
+    "Movies"
+>;
 
 function MoviesScreen() {
     const [loading, setLoading] = useState(true);
     const [allMovies, SetAllMovies] = useState<Array<Movie>>([]);
 
+    const navigation = useNavigation<MoviesScreenNavigationProp>();
     const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
 
     useEffect(() => {
@@ -80,10 +92,11 @@ function MoviesScreen() {
     }
 
     const renderGridItem = ({ item }: { item: Movie }) => (
-        <Image
-            source={{ uri: item.Poster }}
-            style={styles.gridPoster}
-        />
+        <TouchableOpacity
+            onPress={() => navigation.navigate("MovieDetails", { movieId: item._id.toString() })}
+            >
+            <Image source={{ uri: item.Poster }} style={styles.gridPoster} />
+        </TouchableOpacity>
     );
 
     return (
