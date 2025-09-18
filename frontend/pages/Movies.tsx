@@ -16,9 +16,29 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const GRID_POSTER_WIDTH = SCREEN_WIDTH / 5; // make posters smaller to fit 4 per row
 const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 3.3; // keep aspect ratio similar
 
+export interface Movie {
+    _id: ObjectId
+    Title: string,
+    Year: string,
+    Rated: string,
+    Released: Date,
+    Runtime: number,
+    Genre: Array<string>,
+    Director: string,
+    Writer: string,
+    Plot: string,
+    Language: string,
+    Country: Array<string>,
+    Poster: string,
+    imdbRating: number,
+    imdbID: string,
+    Type: string,
+    Cast: Array<string>,
+}
+
 function MoviesScreen() {
     const [loading, setLoading] = useState(true);
-    const [allMovies, SetAllMovies] = useState<Array<any>>([]);
+    const [allMovies, SetAllMovies] = useState<Array<Movie>>([]);
 
     const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
 
@@ -59,7 +79,7 @@ function MoviesScreen() {
         );
     }
 
-    const renderGridItem = ({ item }: { item: any }) => (
+    const renderGridItem = ({ item }: { item: Movie }) => (
         <Image
             source={{ uri: item.Poster }}
             style={styles.gridPoster}
@@ -72,8 +92,8 @@ function MoviesScreen() {
             <FlatList
                 data={allMovies}
                 renderItem={renderGridItem}
-                keyExtractor={(item) => item._id}
-                numColumns={4}  // ✅ changed to 4
+                keyExtractor={(item) => item._id.toString()} // ✅ use _id as key
+                numColumns={4}
                 contentContainerStyle={styles.gridContainer}
                 columnWrapperStyle={styles.gridRow}
                 showsVerticalScrollIndicator={false}

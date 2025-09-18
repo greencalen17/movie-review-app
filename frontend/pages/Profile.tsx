@@ -9,8 +9,9 @@ import {
     FlatList,
 } from "react-native";
 import { ObjectId } from "bson";
+import { Movie } from "./Movies";
 
-interface User {
+export interface User {
     active_status: boolean;
     bio: string;
     created_at: Date;
@@ -37,7 +38,7 @@ const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 4; // maintain aspect ratio
 function ProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
-    const [topTenMovies, setTopTenMovies] = useState<Array<any>>([]);
+    const [topTenMovies, setTopTenMovies] = useState<Array<Movie>>([]);
 
     const email = "greencalen3@gmail.com"; // hardcoded for now
     const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
@@ -106,7 +107,7 @@ function ProfileScreen() {
         );
     }
 
-    const renderGridItem = ({ item }: { item: any }) => (
+    const renderGridItem = ({ item }: { item: Movie }) => (
         <Image
             source={{ uri: item.Poster }}
             style={styles.gridPoster}
@@ -148,7 +149,7 @@ function ProfileScreen() {
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(1, 3).map((movie, index) => (
                             <Image
-                                key={movie._id?.$oid ?? `row2-${index}`}
+                                key={movie._id.toString()}
                                 source={{ uri: movie.Poster }}
                                 style={styles.gridPoster}
                             />
@@ -159,7 +160,7 @@ function ProfileScreen() {
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(3, 6).map((movie, index) => (
                             <Image
-                                key={movie._id?.$oid ?? `row3-${index}`}
+                                key={movie._id.toString()}
                                 source={{ uri: movie.Poster }}
                                 style={styles.gridPoster}
                             />
@@ -170,7 +171,7 @@ function ProfileScreen() {
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(6, 10).map((movie, index) => (
                             <Image
-                                key={movie._id?.$oid ?? `row4-${index}`}
+                                key={movie._id.toString()}
                                 source={{ uri: movie.Poster }}
                                 style={styles.gridPoster}
                             />
