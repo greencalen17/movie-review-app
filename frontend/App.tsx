@@ -3,8 +3,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, Text, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import ProfileScreen from "./pages/Profile";
+import ProfileScreen, { User } from "./pages/Profile";
 import MoviesScreen from "./pages/Movies";
+import { UserProvider } from "./context/UserContext";
 import MovieDetailsScreen from "./components/movie-details";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -12,8 +13,8 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export type RootStackParamList = {
-    Movies: undefined;
-    MovieDetails: { movieId: string };
+    Movies: {user: User};
+    MovieDetails: { movieId: string, user: User};
 };
 
 function MoviesStack() {
@@ -27,9 +28,10 @@ function MoviesStack() {
 
 export default function App() {
     return (
-        <SafeAreaProvider>
+        <UserProvider>
             <NavigationContainer>
                 <Tab.Navigator
+                    initialRouteName= "MoviesTab"// set initial route to Profile
                     screenOptions={{
                         headerShown: false,
                         tabBarLabelStyle: { fontSize: 14 },
@@ -57,6 +59,6 @@ export default function App() {
                     />
                 </Tab.Navigator>
             </NavigationContainer>
-        </SafeAreaProvider>
+        </UserProvider>
     );
 }

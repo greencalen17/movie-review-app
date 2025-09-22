@@ -13,6 +13,8 @@ import { ObjectId } from "bson";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "App";
+import { User } from "./Profile";
+import { useUser } from "context/UserContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -48,6 +50,7 @@ type MoviesScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 function MoviesScreen() {
+    const { user } = useUser();
     const [loading, setLoading] = useState(true);
     const [allMovies, SetAllMovies] = useState<Array<Movie>>([]);
 
@@ -57,12 +60,10 @@ function MoviesScreen() {
     useEffect(() => {
         const fetchMovies = async () => {
             try {
-                console.log("Fetching all movies:");
                 setLoading(true);
                 const moviesResponse = await fetch(`${BASE_URL}/movies/all-movies`);
                 if (!moviesResponse.ok) throw new Error("Movies not found");
                 const moviesData = await moviesResponse.json();
-                console.log("Fetched movies:", moviesData);
                 SetAllMovies(moviesData);
             } catch (err) {
                 console.error(err);
@@ -93,7 +94,16 @@ function MoviesScreen() {
 
     const renderGridItem = ({ item }: { item: Movie }) => (
         <TouchableOpacity
-            onPress={() => navigation.navigate("MovieDetails", { movieId: item._id.toString() })}
+            onPress={() => {
+                if (!user) {
+                    console.warn("No user available yet");
+                    return;
+                }
+                navigation.navigate("MovieDetails", {
+                    movieId: item._id.toString(),
+                    user: user,
+                });
+            }} // pass userId here
             >
             <Image source={{ uri: item.Poster }} style={styles.gridPoster} />
         </TouchableOpacity>

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ObjectId } from "bson";
 import { Movie } from "./Movies";
+import { useUser } from "context/UserContext";
 
 export interface User {
     active_status: boolean;
@@ -36,60 +37,8 @@ const GRID_POSTER_WIDTH = SCREEN_WIDTH / 6;
 const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 4; // maintain aspect ratio
 
 function ProfileScreen() {
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<User | null>(null);
+    const { user, loading } = useUser();
     const [topTenMovies, setTopTenMovies] = useState<Array<Movie>>([]);
-
-    const email = "greencalen3@gmail.com"; // hardcoded for now
-    const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
-
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                setLoading(true);
-                const userResponse = await fetch(
-                    `${BASE_URL}/users/getUserByEmail/${email}`
-                );
-                if (!userResponse.ok) throw new Error("User not found");
-                const userData = await userResponse.json();
-                console.log("Fetched user:", userData);
-                setUser(userData);
-            } catch (err) {
-                console.error(err);
-                console.log("Failed to fetch user data");
-            }
-        };
-
-        fetchUser();
-    }, []);
-
-    useEffect(() => {
-        const fetchFavMovie = async () => {
-            try {
-                if (!user?.favorite_movies) return;
-                setLoading(true);
-                let favMovies = [];
-                for (const movieId of user.favorite_movies) {
-                    const favMovieResponse = await fetch(
-                        `${BASE_URL}/movies/getMovieById/${movieId}`
-                    );
-                    if (!favMovieResponse.ok)
-                        throw new Error("Fav movie not found");
-                    const favMovieData = await favMovieResponse.json();
-                    console.log("Fetched fav movie:", favMovieData);
-                    favMovies.push(favMovieData);
-                }
-                setTopTenMovies(favMovies);
-            } catch (err) {
-                console.error(err);
-                console.log("Failed to fetch favorite movies");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchFavMovie();
-    }, [user]);
 
     if (loading) {
         return (
@@ -98,7 +47,6 @@ function ProfileScreen() {
             </View>
         );
     }
-
     if (!user) {
         return (
             <View style={styles.center}>
@@ -106,6 +54,34 @@ function ProfileScreen() {
             </View>
         );
     }
+
+    const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
+
+    useEffect(() => {
+        const fetchFavMovie = async () => {
+            try {
+                if (!user?.favorite_movies) return;
+                let favMovies = [];
+                for (const movieId of user.favorite_movies) {
+                    const favMovieResponse = await fetch(
+                        `${BASE_URL}/movies/getMovieById/${movieId}`
+                    );
+                    if (!favMovieResponse.ok)
+                        throw new Error("Fav movie not found");
+                    const favMovieData = await favMovieResponse.json();
+                    favMovies.push(favMovieData);
+                }
+                setTopTenMovies(favMovies);
+            } catch (err) {
+                console.error(err);
+                console.log("Failed to fetch favorite movies");
+            } finally {
+                
+            }
+        };
+
+        fetchFavMovie();
+    }, [user]);
 
     const renderGridItem = ({ item }: { item: Movie }) => (
         <Image
