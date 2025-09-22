@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import userRoutes from "./src/users/users";
 import movieRoutes from "./src/movies/movies";
+import reviewRoutes from "./src/reviews/reviews";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/users", userRoutes);
 app.use("/movies", movieRoutes);
+app.use("/reviews", reviewRoutes);
 
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI;
@@ -35,4 +37,3 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
-

@@ -9,11 +9,13 @@ import {
     ActivityIndicator,
     Linking,
     Dimensions,
+    Vibration
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ArrowLeft, Play } from "lucide-react-native";
 import Slider from "@react-native-community/slider"; // <-- Add this import
 import { Movie } from "pages/Movies";
+import { useUser } from "context/UserContext";
 
 const BASE_URL = "http://192.168.1.168:5000";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -30,16 +32,18 @@ const getRatingEmoji = (rating: number) => {
 function MovieDetailsScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-    const { movieId } = route.params as { movieId: string };
+    const { user, loading } = useUser();
+    const { movieId } = route.params as { movieId: string; };
 
-    const [loading, setLoading] = useState(true);
+    if (loading) return <ActivityIndicator />;
+    if (!user) return <Text>No user available 😢</Text>;
+
     const [movie, setMovie] = useState<Movie | null>(null);
-    const [rating, setRating] = useState<number>(5); // Default rating at 5
+    const [rating, setRating] = useState<number>(0); // Default rating at 5
 
     useEffect(() => {
         const fetchMovie = async () => {
             try {
-                setLoading(true);
                 const response = await fetch(`${BASE_URL}/movies/getMovieById/${movieId}`);
                 if (!response.ok) throw new Error("Failed to fetch movie");
                 const data = await response.json();
@@ -47,12 +51,54 @@ function MovieDetailsScreen() {
             } catch (err) {
                 console.error("Error fetching movie:", err);
             } finally {
-                setLoading(false);
+
             }
         };
 
         fetchMovie();
+
+        const fetchUserRating = async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/reviews/getUserMovieRating/${movieId}/${user._id}`);
+                if (!response.ok) throw new Error("Failed to get user rating");
+                const data = await response.json();
+                if (data.rating && data.rating >= 0) {
+                    console.log("User rating:", data.rating);
+                    setRating(data.rating);
+                } else {
+                    console.log("No existing rating found for this user and movie.");
+                }
+            } catch (err) {
+                console.error("Error fetching user rating", err);
+            } finally {
+                
+            }
+        };
+
+        fetchUserRating();
     }, [movieId]);
+
+    const addReview = async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/reviews/add-review`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        user: user._id,
+                        movie: movieId,
+                        rating,
+                        comment: ""
+                    })
+                });
+                if (!response.ok) throw new Error("Failed to add review");
+                const data = await response.json();
+                console.log("Review saved:", data);
+            } catch (err) {
+                console.error("Error adding review:", err);
+            } finally {
+                
+            }
+        };
 
     const openTrailer = () => {
         if (movie?.Trailer) {
@@ -119,7 +165,13 @@ function MovieDetailsScreen() {
                     maximumValue={10}
                     step={0.1}
                     value={rating}
-                    onValueChange={(val) => setRating(val)}
+                    onValueChange={(val) => setRating(val)}  // just update UI as user drags
+                    onSlidingComplete={async (val) => {
+                        const rounded = Math.round(val * 10) / 10;
+                        setRating(rounded);
+                        Vibration.vibrate(5); // vibrate for 5ms
+                        await addReview();
+                    }}
                     minimumTrackTintColor="#6200EE"
                     maximumTrackTintColor="#ccc"
                     thumbTintColor="#6200EE"
