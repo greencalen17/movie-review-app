@@ -32,7 +32,6 @@ router.get("/all-movies", async (req: Request, res: Response) => {
         if (!allMovies) {
             return res.status(404).json({ error: "Movies not found" });
         }
-        console.log("Fetched movies:", allMovies);
         res.json(allMovies);
     } catch (error) {
         console.error("Error in GET /movies/all-movies:", error);
@@ -52,7 +51,6 @@ router.get("/getMovieById/:_id", async (req: Request, res: Response) => {
         if (!movie) {
             return res.status(404).json({ error: "Movie not found" });
         }
-        console.log("Fetched movie:", movie);
         res.json(movie);
     } catch (error) {
         console.error("Error in GET /movies/getMovieById/:_id:", error);
