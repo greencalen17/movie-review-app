@@ -12,21 +12,33 @@ import {
     Vibration
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ArrowLeft, Play } from "lucide-react-native";
+import { ArrowLeft, Play, Star, StarHalf, StarOff } from "lucide-react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import Slider from "@react-native-community/slider"; // <-- Add this import
 import { Movie } from "pages/Movies";
 import { useUser } from "context/UserContext";
 
 const BASE_URL = "http://192.168.1.168:5000";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const getRatingEmoji = (rating: number) => {
-    if (rating < 1.5) return "🤮"; // Throw up face
-    else if (rating < 3) return "😫"; // Agony face
-    else if (rating < 4.5) return "😴"; // Snooze face
-    else if (rating < 6) return "😐"; // Straight face
-    else if (rating < 7.5) return "🙂"; // Slight smile
-    else if (rating < 9) return "😁"; // Big smile
-    else return "🤩"; // Star eyes
+const getRatingStars = ({ rating }: { rating: number }) => {
+    const starsOutOfFive = rating / 2;
+    const fullStars = Math.floor(starsOutOfFive);
+    const halfStar = starsOutOfFive % 1 >= 0.5 ? 1 : 0;
+    const emptyStars = 5 - fullStars - halfStar;
+
+    return (
+        <View style={{ flexDirection: "row" }}>
+        {[...Array(fullStars)].map((_, i) => (
+            <Icon key={`full-${i}`} name="star" size={24} color="gold" />
+        ))}
+        {halfStar === 1 && (
+            <Icon key="half" name="star-half" size={24} color="gold" />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+            <Icon key={`empty-${i}`} name="star-border" size={24} color="gold" />
+        ))}
+        </View>
+    );
 };
 
 function MovieDetailsScreen() {
@@ -39,7 +51,7 @@ function MovieDetailsScreen() {
     if (!user) return <Text>No user available 😢</Text>;
 
     const [movie, setMovie] = useState<Movie | null>(null);
-    const [rating, setRating] = useState<number>(0); // Default rating at 5
+    const [rating, setRating] = useState<number>(-1); // Default rating at 5
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -63,10 +75,7 @@ function MovieDetailsScreen() {
                 if (!response.ok) throw new Error("Failed to get user rating");
                 const data = await response.json();
                 if (data.rating && data.rating >= 0) {
-                    console.log("User rating:", data.rating);
                     setRating(data.rating);
-                } else {
-                    console.log("No existing rating found for this user and movie.");
                 }
             } catch (err) {
                 console.error("Error fetching user rating", err);
@@ -78,7 +87,7 @@ function MovieDetailsScreen() {
         fetchUserRating();
     }, [movieId]);
 
-    const addReview = async () => {
+    const addRating = async () => {
             try {
                 const response = await fetch(`${BASE_URL}/reviews/add-review`, {
                     method: "POST",
@@ -92,7 +101,6 @@ function MovieDetailsScreen() {
                 });
                 if (!response.ok) throw new Error("Failed to add review");
                 const data = await response.json();
-                console.log("Review saved:", data);
             } catch (err) {
                 console.error("Error adding review:", err);
             } finally {
@@ -155,28 +163,62 @@ function MovieDetailsScreen() {
                 </TouchableOpacity>
             )}
             {/* Rating Section */}
-            <View style={styles.ratingContainer}>
-                <Text style={styles.ratingLabel}>
-                    {rating.toFixed(1)}/10 {getRatingEmoji(rating)}
-                </Text>
-                <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={10}
-                    step={0.1}
-                    value={rating}
-                    onValueChange={(val) => setRating(val)}  // just update UI as user drags
-                    onSlidingComplete={async (val) => {
-                        const rounded = Math.round(val * 10) / 10;
-                        setRating(rounded);
-                        Vibration.vibrate(5); // vibrate for 5ms
-                        await addReview();
-                    }}
-                    minimumTrackTintColor="#6200EE"
-                    maximumTrackTintColor="#ccc"
-                    thumbTintColor="#6200EE"
-                />
-            </View>
+            {rating >= 0 && (
+                <View>
+                    <Text style={styles.ratingLabel}>
+                        {rating.toFixed(1)}/10
+                    </Text>
+                    <View style={styles.ratingStars}>
+                        {getRatingStars({ rating })}
+                    </View>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={10}
+                        step={0.1}
+                        value={rating}
+                        onValueChange={(val) => setRating(val)}  // just update UI as user drags
+                        onSlidingComplete={async (val) => {
+                            const rounded = Math.round(val * 10) / 10;
+                            setRating(rounded);
+                            Vibration.vibrate(5); // vibrate for 5ms
+                            await addRating();
+                        }}
+                        minimumTrackTintColor="#6200EE"
+                        maximumTrackTintColor="#ccc"
+                        thumbTintColor="#6200EE"
+                    />
+                </View>
+            )}
+            {rating < 0 && (
+                <View>
+                    <Text style={styles.ratingLabel}>
+                        Rate:
+                    </Text>
+                    <View style={styles.ratingStars}>
+                    {[...Array(5)].map((_, i) => (
+                        <Icon key={`empty-${i}`} name="star-border" size={24} color="gold" />
+                    ))}
+                    </View>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={10}
+                        step={0.1}
+                        value={rating}
+                        onValueChange={(val) => setRating(val)}  // just update UI as user drags
+                        onSlidingComplete={async (val) => {
+                            const rounded = Math.round(val * 10) / 10;
+                            setRating(rounded);
+                            Vibration.vibrate(5); // vibrate for 5ms
+                            await addRating();
+                        }}
+                        minimumTrackTintColor="#9e9e9eff"
+                        maximumTrackTintColor="#ccc"
+                        thumbTintColor="#4b4b4bff"
+                    />
+                </View>
+            )}
             {/* Info */}
             <Text style={styles.title}>{movie.Title}</Text>
             <Text style={styles.subtitle}>{movie.Year} • {movie.Runtime} mins</Text>
@@ -236,14 +278,15 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 20,
     },
-    ratingContainer: {
-        
-    },
     ratingLabel: {
         fontSize: 18,
         fontWeight: "600",
-        marginBottom: 8,
         textAlign: "center",
+    },
+    ratingStars: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginVertical: 1,
     },
     slider: {
         width: "100%",

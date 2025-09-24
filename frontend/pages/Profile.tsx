@@ -7,10 +7,12 @@ import {
     Image,
     Dimensions,
     FlatList,
+    TouchableOpacity,
 } from "react-native";
 import { ObjectId } from "bson";
-import { Movie } from "./Movies";
+import { Movie, MoviesScreenNavigationProp } from "./Movies";
 import { useUser } from "context/UserContext";
+import { useNavigation } from "@react-navigation/native";
 
 export interface User {
     active_status: boolean;
@@ -39,6 +41,8 @@ const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 4; // maintain aspect ratio
 function ProfileScreen() {
     const { user, loading } = useUser();
     const [topTenMovies, setTopTenMovies] = useState<Array<Movie>>([]);
+
+    const navigation = useNavigation<MoviesScreenNavigationProp>();
 
     if (loading) {
         return (
@@ -83,13 +87,6 @@ function ProfileScreen() {
         fetchFavMovie();
     }, [user]);
 
-    const renderGridItem = ({ item }: { item: Movie }) => (
-        <Image
-            source={{ uri: item.Poster }}
-            style={styles.gridPoster}
-        />
-    );
-
     return (
         <View style={styles.container}>
             {/* Profile Picture & Info */}
@@ -115,42 +112,94 @@ function ProfileScreen() {
                 <View style={styles.favoriteMovieContainer}>
                     {/* Row 1 - Main Favorite Poster */}
                     {topTenMovies[0] && (
-                        <Image
-                            source={{ uri: topTenMovies[0].Poster }}
-                            style={styles.favoriteMoviePoster}
-                        />
+                        <TouchableOpacity
+                                    onPress={() => {
+                                        if (!user) {
+                                            console.warn("No user available yet");
+                                            return;
+                                        }
+                                        navigation.navigate("MovieDetails", {
+                                            movieId: topTenMovies[0]._id.toString(),
+                                            user: user,
+                                        });
+                                    }} // pass userId here
+                                    >
+                            <Image
+                                source={{ uri: topTenMovies[0].Poster }}
+                                style={styles.favoriteMoviePoster}
+                            />
+                        </TouchableOpacity>
                     )}
 
                     {/* Row 2 - 2 posters */}
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(1, 3).map((movie, index) => (
-                            <Image
-                                key={movie._id.toString()}
-                                source={{ uri: movie.Poster }}
-                                style={styles.gridPoster}
-                            />
+                            <TouchableOpacity
+                                    onPress={() => {
+                                        if (!user) {
+                                            console.warn("No user available yet");
+                                            return;
+                                        }
+                                        navigation.navigate("MovieDetails", {
+                                            movieId: movie._id.toString(),
+                                            user: user,
+                                        });
+                                    }} // pass userId here
+                                    >
+                                <Image
+                                    // key={movie._id.toString()}
+                                    source={{ uri: movie.Poster }}
+                                    style={styles.gridPoster}
+                                />
+                            </TouchableOpacity>
                         ))}
                     </View>
 
                     {/* Row 3 - 3 posters */}
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(3, 6).map((movie, index) => (
-                            <Image
-                                key={movie._id.toString()}
-                                source={{ uri: movie.Poster }}
-                                style={styles.gridPoster}
-                            />
+                            <TouchableOpacity
+                                    onPress={() => {
+                                        if (!user) {
+                                            console.warn("No user available yet");
+                                            return;
+                                        }
+                                        navigation.navigate("MovieDetails", {
+                                            movieId: movie._id.toString(),
+                                            user: user,
+                                        });
+                                    }} // pass userId here
+                                    >
+                                <Image
+                                    // key={movie._id.toString()}
+                                    source={{ uri: movie.Poster }}
+                                    style={styles.gridPoster}
+                                />
+                            </TouchableOpacity>
                         ))}
                     </View>
 
                     {/* Row 4 - 4 posters */}
                     <View style={styles.pyramidRow}>
                         {topTenMovies.slice(6, 10).map((movie, index) => (
-                            <Image
-                                key={movie._id.toString()}
-                                source={{ uri: movie.Poster }}
-                                style={styles.gridPoster}
-                            />
+                            <TouchableOpacity
+                                    onPress={() => {
+                                        if (!user) {
+                                            console.warn("No user available yet");
+                                            return;
+                                        }
+                                        navigation.navigate("MovieDetails", {
+                                            movieId: movie._id.toString(),
+                                            user: user,
+                                        });
+                                    }} // pass userId here
+                                    >
+                                <Image
+                                    // key={movie._id.toString()}
+                                    source={{ uri: movie.Poster }}
+                                    style={styles.gridPoster}
+                                />
+                            </TouchableOpacity>
                         ))}
                     </View>
                 </View>

@@ -44,7 +44,7 @@ export interface Movie {
     Trailer?: string,
 }
 
-type MoviesScreenNavigationProp = NativeStackNavigationProp<
+export type MoviesScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     "Movies"
 >;

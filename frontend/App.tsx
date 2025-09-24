@@ -31,7 +31,7 @@ export default function App() {
         <UserProvider>
             <NavigationContainer>
                 <Tab.Navigator
-                    initialRouteName= "MoviesTab"// set initial route to Profile
+                    initialRouteName= "MoviesTab"// set initial route to Movies
                     screenOptions={{
                         headerShown: false,
                         tabBarLabelStyle: { fontSize: 14 },
