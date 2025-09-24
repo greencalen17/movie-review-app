@@ -73,6 +73,20 @@ router.post("/add-review", async (req: Request, res: Response) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
+        const alreadyReviewed = await reviews.findOne({ user: new ObjectId(user), movie: new ObjectId(movie) });
+        if (alreadyReviewed) {
+            const updatedReview = await reviews.findOneAndUpdate(
+                { user: new ObjectId(user), movie: new ObjectId(movie) },
+                { $set: { rating: Number(rating), comment: comment || "", updatedAt: new Date() } },
+                { returnDocument: "after" }
+            );
+            return res.json({
+                success: true,
+                updatedId: updatedReview.value?._id,
+                review: updatedReview.value
+            });
+        }
+
         const newReview = { 
             user: new ObjectId(user),
             movie: new ObjectId(movie),
@@ -102,7 +116,6 @@ router.get("/getUserMovieRating/:movieId/:userId", async (req: Request, res: Res
 
         const movieId = req.params.movieId;
         const userId = req.params.userId;
-        console.log("Fetching rating for movieId:", movieId, "and userId:", userId);
         const review = await reviews.findOne({ user: new ObjectId(userId), movie: new ObjectId(movieId) });
 
         if (!review) {
