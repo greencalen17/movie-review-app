@@ -59,7 +59,7 @@ function ProfileScreen() {
         );
     }
 
-    const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
+    const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev"; // replace with your local IP
 
     useEffect(() => {
         const fetchFavMovie = async () => {

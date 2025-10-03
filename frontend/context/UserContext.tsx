@@ -8,7 +8,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     const email = "greencalen3@gmail.com";
-    const BASE_URL = "http://192.168.1.168:5000";
+    const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev";
 
     useEffect(() => {
         const fetchUser = async () => {

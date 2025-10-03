@@ -22,25 +22,43 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const GRID_POSTER_WIDTH = SCREEN_WIDTH / 5; // make posters smaller to fit 4 per row
 const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 3.3; // keep aspect ratio similar
 
+export interface TMDbMovie {
+    id: number;
+    title: string;
+    overview?: string;
+    release_date?: string;
+    genres?: { id: number; name: string }[];
+    vote_average?: number;
+    vote_count?: number;
+    credits?: { cast: any[]; crew: any[] };
+    images?: { posters: any[]; backdrops: any[] };
+    [key: string]: any;
+}
 export interface Movie {
     _id: ObjectId
-    Title: string,
-    Year: string,
-    Rated: string,
-    Released: Date,
-    Runtime: number,
+    id: number, // TMDb movie ID
+    title: string,
+    tagline: string;
+    overview?: string;
+    release_date?: string,
+    genres?: { id: number; name: string }[];
+    vote_average?: number;
+    vote_count?: number;
+    credits?: { cast: any[]; crew: any[] };
+    images?: { posters: any[]; backdrops: any[] };
+    [key: string]: any;
+    runtime: number,
+    backdrop_path?: string,
+    poster_path?: string,
+    status: string,
+    homepage: string,
     Genre: Array<string>,
-    Director: string,
-    Writer: string,
-    Plot: string,
     Language: string,
     Country: Array<string>,
-    Poster: string,
     imdbRating: number,
-    imdbID: string,
+    imdb_id?: string,
     Type: string,
     Cast: Array<string>,
-    Banner?: string,
     Trailer?: string,
 }
 
@@ -55,7 +73,7 @@ function MoviesScreen() {
     const [allMovies, SetAllMovies] = useState<Array<Movie>>([]);
 
     const navigation = useNavigation<MoviesScreenNavigationProp>();
-    const BASE_URL = "http://192.168.1.168:5000"; // replace with your local IP
+    const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev"; // replace with your local IP
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -105,7 +123,7 @@ function MoviesScreen() {
                 });
             }} // pass userId here
             >
-            <Image source={{ uri: item.Poster }} style={styles.gridPoster} />
+            <Image source={{ uri: "https://image.tmdb.org/t/p/w500" + item.poster_path }} style={styles.gridPoster} />
         </TouchableOpacity>
     );
 
