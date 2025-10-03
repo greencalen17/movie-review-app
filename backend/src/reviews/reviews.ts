@@ -69,7 +69,7 @@ router.post("/add-review", async (req: Request, res: Response) => {
         const { user, movie, rating, comment } = req.body;
 
         // Basic validation
-        if (!user || !movie || !rating) {
+        if (!user || !movie || rating === undefined) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
