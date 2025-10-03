@@ -18,7 +18,7 @@ import Slider from "@react-native-community/slider"; // <-- Add this import
 import { Movie } from "pages/Movies";
 import { useUser } from "context/UserContext";
 
-const BASE_URL = "http://192.168.1.168:5000";
+const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const getRatingStars = ({ rating }: { rating: number }) => {
     const starsOutOfFive = rating / 2;
@@ -74,7 +74,7 @@ function MovieDetailsScreen() {
                 const response = await fetch(`${BASE_URL}/reviews/getUserMovieRating/${movieId}/${user._id}`);
                 if (!response.ok) throw new Error("Failed to get user rating");
                 const data = await response.json();
-                if (data.rating && data.rating >= 0) {
+                if (data.rating !== undefined && data.rating >= 0) {
                     setRating(data.rating);
                 }
             } catch (err) {
@@ -89,6 +89,7 @@ function MovieDetailsScreen() {
 
     const addRating = async () => {
             try {
+                console.log("Adding rating:", rating);
                 const response = await fetch(`${BASE_URL}/reviews/add-review`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -99,7 +100,7 @@ function MovieDetailsScreen() {
                         comment: ""
                     })
                 });
-                if (!response.ok) throw new Error("Failed to add review");
+                if (!response.ok) throw new Error("Failed to review");
                 const data = await response.json();
             } catch (err) {
                 console.error("Error adding review:", err);
@@ -140,22 +141,22 @@ function MovieDetailsScreen() {
             </TouchableOpacity>
 
             {/* Banner with Play Button */}
-            {movie.Banner && movie.Trailer && (
+            {movie.backdrop_path && movie.Trailer && (
                 <TouchableOpacity onPress={openTrailer} activeOpacity={0.8}>
                     <View style={styles.bannerContainer}>
-                        <Image source={{ uri: movie.Banner }} style={styles.banner} />
+                        <Image source={{ uri: "https://image.tmdb.org/t/p/w780" + movie.backdrop_path }} style={styles.banner} />
                         <View style={styles.playOverlay}>
                             <Play size={64} color="white" strokeWidth={1.5} />
                         </View>
                     </View>
                 </TouchableOpacity>
             )}
-            {movie.Banner && !movie.Trailer && (
+            {movie.backdrop_path && !movie.Trailer && (
                 <View style={styles.bannerContainer}>
-                    <Image source={{ uri: movie.Banner }} style={styles.banner} />
+                    <Image source={{ uri: "https://image.tmdb.org/t/p/w780" + movie.backdrop_path }} style={styles.banner} />
                 </View>
             )}
-            {!movie.Banner && movie.Trailer && (
+            {!movie.backdrop_path && movie.Trailer && (
                 <TouchableOpacity onPress={openTrailer} activeOpacity={0.8}>
                     <View style={styles.playOverlay}>
                         <Play size={64} color="white" strokeWidth={1.5} />
@@ -179,9 +180,9 @@ function MovieDetailsScreen() {
                         value={rating}
                         onValueChange={(val) => setRating(val)}  // just update UI as user drags
                         onSlidingComplete={async (val) => {
-                            const rounded = Math.round(val * 10) / 10;
+                            const rounded = Math.round(val * 10) / 10; // keep 1 decimal
                             setRating(rounded);
-                            Vibration.vibrate(5); // vibrate for 5ms
+                            Vibration.vibrate(5); 
                             await addRating();
                         }}
                         minimumTrackTintColor="#6200EE"
@@ -190,10 +191,10 @@ function MovieDetailsScreen() {
                     />
                 </View>
             )}
-            {rating < 0 && (
+            {rating == -1 && (
                 <View>
                     <Text style={styles.ratingLabel}>
-                        Rate:
+                        Rate Now ↓
                     </Text>
                     <View style={styles.ratingStars}>
                     {[...Array(5)].map((_, i) => (
@@ -220,15 +221,16 @@ function MovieDetailsScreen() {
                 </View>
             )}
             {/* Info */}
-            <Text style={styles.title}>{movie.Title}</Text>
-            <Text style={styles.subtitle}>{movie.Year} • {movie.Runtime} mins</Text>
-            <Text style={styles.plot}>{movie.Plot}</Text>
+            <Text style={styles.title}>{movie.title}</Text>
+            <Text style={styles.subtitle}>{movie.release_date} • {movie.runtime} mins</Text>
+            <Text style={styles.plot}>{movie.overview}</Text>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
+        width: "100%",
         marginTop: SCREEN_HEIGHT / 20,
         flex: 1,
         padding: 16,
@@ -250,7 +252,7 @@ const styles = StyleSheet.create({
     },
     banner: {
         width: "100%",
-        height: 400,
+        height: SCREEN_HEIGHT / 3,
         borderRadius: 12,
         resizeMode: "cover",
     },
