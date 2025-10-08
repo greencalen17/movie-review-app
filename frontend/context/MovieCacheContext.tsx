@@ -18,7 +18,7 @@ interface MovieCacheProviderProps {
 }
 
 export const MovieCacheProvider: React.FC<MovieCacheProviderProps> = ({ children }) => {
-    const [cachedMovies, setCachedMovies] = useState<any[]>([]);
+    const [cachedMovies, setCachedMovies] = useState<Movie[]>([]);
     const [scrollOffset, setScrollOffset] = useState(0);
 
     return (
