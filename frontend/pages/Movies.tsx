@@ -1,66 +1,55 @@
-import React, { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    ActivityIndicator,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    Dimensions,
-    FlatList,
-} from "react-native";
-import { ObjectId } from "bson";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "App";
-import { User } from "./Profile";
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, StyleSheet, Dimensions } from "react-native";
 import { useUser } from "context/UserContext";
 import { useMovieCache } from "context/MovieCacheContext";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "App";
+import { ObjectId } from "bson";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// ✅ Poster sizing
-const GRID_POSTER_WIDTH = SCREEN_WIDTH / 5; // make posters smaller to fit 4 per row
-const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 3.3; // keep aspect ratio similar
+const GRID_POSTER_WIDTH = SCREEN_WIDTH / 5;
+const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 3.3;
 
-export interface TMDbMovie {
-    id: number;
+export interface TMDbMovie { 
+    id: number; 
+    title: string; 
+    overview?: string; 
+    release_date?: string; 
+    genres?: { id: number; name: string }[]; 
+    vote_average?: number; vote_count?: number; 
+    credits?: { cast: any[]; crew: any[] }; 
+    images?: { posters: any[]; backdrops: any[] }; 
+    [key: string]: any; 
+} 
+    
+export interface Movie { 
+    _id: ObjectId; 
+    id: number; // TMDb movie ID 
     title: string;
-    overview?: string;
-    release_date?: string;
-    genres?: { id: number; name: string }[];
-    vote_average?: number;
-    vote_count?: number;
-    credits?: { cast: any[]; crew: any[] };
-    images?: { posters: any[]; backdrops: any[] };
-    [key: string]: any;
-}
-export interface Movie {
-    _id: ObjectId
-    id: number, // TMDb movie ID
-    title: string,
-    tagline: string;
-    overview?: string;
-    release_date?: string,
-    genres?: { id: number; name: string }[];
-    vote_average?: number;
-    vote_count?: number;
-    credits?: { cast: any[]; crew: any[] };
-    images?: { posters: any[]; backdrops: any[] };
-    [key: string]: any;
-    runtime: number,
-    backdrop_path?: string,
-    poster_path?: string,
-    status: string,
-    homepage: string,
-    Genre: Array<string>,
-    Language: string,
-    Country: Array<string>,
-    imdbRating: number,
-    imdb_id?: string,
-    Type: string,
-    Cast: Array<string>,
-    Trailer?: string,
+    tagline: string; 
+    overview?: string; 
+    release_date?: string; 
+    genres?: { id: number; name: string }[]; 
+    vote_average?: number; 
+    vote_count?: number; 
+    credits?: { cast: any[]; crew: any[] }; 
+    images?: { posters: any[]; backdrops: any[] }; 
+    [key: string]: any; 
+    runtime: number; 
+    backdrop_path?: string; 
+    poster_path?: string; 
+    status: string; 
+    homepage: string; 
+    Genre: Array<string>; 
+    Language: string; 
+    Country: Array<string>; 
+    imdbRating: number; 
+    imdb_id?: string; 
+    Type: string; 
+    Cast: Array<string>; 
+    Trailer?: string; 
 }
 
 export type MoviesScreenNavigationProp = NativeStackNavigationProp<
@@ -68,43 +57,64 @@ export type MoviesScreenNavigationProp = NativeStackNavigationProp<
     "Movies"
 >;
 
-function MoviesScreen() {
-    const { cachedMovies, setCachedMovies, scrollOffset, setScrollOffset } = useMovieCache();
+export default function MoviesScreen() {
     const { user } = useUser();
+    const { cachedMovies, setCachedMovies, scrollOffset, setScrollOffset } = useMovieCache();
+
+    const [allMovies, setAllMovies] = useState<Movie[]>(cachedMovies || []);
     const [loading, setLoading] = useState(false);
-    const [allMovies, setAllMovies] = useState<Array<Movie>>(cachedMovies || []);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
 
     const navigation = useNavigation<MoviesScreenNavigationProp>();
-    const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev"; // replace with your local IP
+    const flatListRef = useRef<FlatList<Movie>>(null);
+    const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev";
 
+    // Step 1: Restore cached movies first
     useEffect(() => {
-        fetchMovies(1);
+        if (cachedMovies.length > 0) {
+            console.log(`Restoring ${cachedMovies.length} cached movies...`);
+            setAllMovies(cachedMovies);
+            setPage(Math.ceil(cachedMovies.length / 48) + 1);
+        } else {
+            fetchMovies(1);
+        }
     }, []);
 
+    // Step 2: Restore scroll AFTER movies are loaded
+    useEffect(() => {
+        if (cachedMovies.length > 0 && flatListRef.current && scrollOffset > 0) {
+            setTimeout(() => {
+                console.log("Restoring scroll offset:", scrollOffset);
+                flatListRef.current?.scrollToOffset({ offset: scrollOffset, animated: false });
+            }, 300);
+        }
+    }, [cachedMovies]);
+
+    // Step 3: Keep cache updated
     useEffect(() => {
         setCachedMovies(allMovies);
     }, [allMovies]);
 
     const fetchMovies = async (pageNum: number) => {
-        if (loading || !hasMore) {
-            console.log("Blocked: loading:", loading, "hasMore:", hasMore);
-            return;
-        }
+        if (loading || !hasMore) return;
+
         setLoading(true);
         try {
-            const url = `${BASE_URL}/movies/all-movies?page=${pageNum}&limit=12`;
+            const url = `${BASE_URL}/movies/all-movies?page=${pageNum}&limit=48`;
+            console.log("Fetching:", url);
             const res = await fetch(url);
             const moviesData: Movie[] = await res.json();
-            console.log("Fetched movies:", moviesData.length);
+
             if (moviesData.length === 0) {
                 setHasMore(false);
                 return;
             }
+
             setAllMovies((prev) => [...prev, ...moviesData]);
             setPage((prev) => prev + 1);
-            if (moviesData.length < 12) {
+
+            if (moviesData.length < 48) {
                 setHasMore(false);
             }
         } catch (err) {
@@ -114,65 +124,53 @@ function MoviesScreen() {
         }
     };
 
-    if (loading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" color="#0000ff" />
-            </View>
-        );
-    }
-
-    if (!allMovies) {
-        return (
-            <View style={styles.center}>
-                <Text>Movies not found 😢</Text>
-            </View>
-        );
-    }
-
     const renderGridItem = ({ item }: { item: Movie }) => (
         <TouchableOpacity
-            onPress={() => {
-                if (!user) {
-                    console.warn("No user available yet");
-                    return;
-                }
-                navigation.navigate("MovieDetails", {
-                    movieId: item._id.toString(),
-                    user: user,
-                });
-            }} // pass userId here
-            >
-            <Image source={{ uri: "https://image.tmdb.org/t/p/w500" + item.poster_path }} style={styles.gridPoster} />
+        onPress={() => {
+            if (!user) return;
+            navigation.navigate("MovieDetails", {
+            movieId: item._id.toString(),
+            user: user,
+            });
+        }}
+        >
+        <Image
+            source={{
+                uri: item.poster_path
+                ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                : "https://www.shutterstock.com/image-vector/missing-picture-page-website-design-600nw-1552421075.jpg",
+            }}
+            style={styles.gridPoster}
+        />
         </TouchableOpacity>
     );
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>All Movies</Text>
-            <FlatList
-                data={allMovies}
-                renderItem={renderGridItem}
-                // keyExtractor={(item) => item._id.toString()}
-                numColumns={4}
-                contentContainerStyle={styles.gridContainer}
-                columnWrapperStyle={styles.gridRow}
-                showsVerticalScrollIndicator={false}
-                onEndReached={() => {
-                    if (!loading && hasMore) {
-                        fetchMovies(page);
-                    }
-                }}
-                onEndReachedThreshold={0.2}
-                ListFooterComponent={
-                    loading ? (
-                        <ActivityIndicator size="small" style={{ margin: 20 }} />
-                    ) : null
-                }
-            />
+        <Text style={styles.title}>All Movies</Text>
+        <FlatList
+            ref={flatListRef}
+            data={allMovies}
+            renderItem={renderGridItem}
+            keyExtractor={(item) => item.imdb_id || item.id.toString()}
+            numColumns={4}
+            contentContainerStyle={styles.gridContainer}
+            columnWrapperStyle={styles.gridRow}
+            showsVerticalScrollIndicator={false}
+            onScroll={(e) => {
+            const offsetY = e.nativeEvent.contentOffset.y;
+            setScrollOffset(offsetY);
+            }}
+            onEndReached={() => {
+            if (!loading && hasMore) fetchMovies(page);
+            }}
+            onEndReachedThreshold={0.2}
+            ListFooterComponent={
+            loading ? <ActivityIndicator size="small" style={{ margin: 20 }} /> : null
+            }
+        />
         </View>
     );
-
 }
 
 const styles = StyleSheet.create({
@@ -181,33 +179,15 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
     },
-    textContainer: {
-        flexShrink: 1,
-    },
-    title: {
-        fontSize: 28,
-    },
-    gridContainer: {
-        alignItems: "center",
-        alignSelf: "center",  // centers entire grid horizontally
-        paddingVertical: 5,
-    },
-    gridRow: {
-        justifyContent: "center",  // 👈 centers each row horizontally
-    },
+    title: { fontSize: 28 },
+    gridContainer: { alignItems: "center", paddingVertical: 5 },
+    gridRow: { justifyContent: "center" },
     gridPoster: {
         width: GRID_POSTER_WIDTH,
         height: GRID_POSTER_HEIGHT,
         borderRadius: 6,
-        marginHorizontal: SCREEN_WIDTH / 90, // slightly smaller horizontal gap
-        marginBottom: SCREEN_HEIGHT / 90,    // slightly smaller vertical gap
+        marginHorizontal: SCREEN_WIDTH / 90,
+        marginBottom: SCREEN_HEIGHT / 90,
         resizeMode: "cover",
     },
-    center: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
 });
-
-export default MoviesScreen;
