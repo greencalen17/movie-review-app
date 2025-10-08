@@ -89,7 +89,6 @@ function MovieDetailsScreen() {
 
     const addRating = async () => {
             try {
-                console.log("Adding rating:", rating);
                 const response = await fetch(`${BASE_URL}/reviews/add-review`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

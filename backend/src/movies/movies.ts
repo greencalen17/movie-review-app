@@ -21,17 +21,30 @@ async function connectDB() {
     return db;
 }
 
-// GET /all movies
+// GET /movies/all-movies?page=1&limit=100
 router.get("/all-movies", async (req: Request, res: Response) => {
     try {
         const database = await connectDB();
         const movies = database.collection("Movies");
 
-        const allMovies = await movies.find().toArray();
+        // defaults
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 100;
+
+        console.log(`Fetching movies - Page: ${page}, Limit: ${limit}`);
+
+        const skip = (page - 1) * limit;
+
+        const allMovies = await movies.find()
+            .skip(skip)
+            .limit(limit)
+            .toArray();
 
         if (!allMovies) {
             return res.status(404).json({ error: "Movies not found" });
         }
+        console.log(`Fetched ${allMovies.length} movies`);
+
         res.json(allMovies);
     } catch (error) {
         console.error("Error in GET /movies/all-movies:", error);

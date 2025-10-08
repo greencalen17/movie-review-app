@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import ProfileScreen, { User } from "./pages/Profile";
 import MoviesScreen from "./pages/Movies";
 import { UserProvider } from "./context/UserContext";
+import { MovieCacheProvider } from "./context/MovieCacheContext"; // ✅ import provider
 import MovieDetailsScreen from "./components/movie-details";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -13,16 +14,19 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export type RootStackParamList = {
-    Movies: {user: User};
-    MovieDetails: { movieId: string, user: User};
+    Movies: { user: User };
+    MovieDetails: { movieId: string; user: User };
 };
 
+// ✅ Wrap your movie stack with the provider
 function MoviesStack() {
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Movies" component={MoviesScreen} />
-            <Stack.Screen name="MovieDetails" component={MovieDetailsScreen} />
-        </Stack.Navigator>
+        <MovieCacheProvider>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="Movies" component={MoviesScreen} />
+                <Stack.Screen name="MovieDetails" component={MovieDetailsScreen} />
+            </Stack.Navigator>
+        </MovieCacheProvider>
     );
 }
 
@@ -31,7 +35,7 @@ export default function App() {
         <UserProvider>
             <NavigationContainer>
                 <Tab.Navigator
-                    initialRouteName= "MoviesTab"// set initial route to Movies
+                    initialRouteName="MoviesTab"
                     screenOptions={{
                         headerShown: false,
                         tabBarLabelStyle: { fontSize: 14 },
@@ -43,7 +47,7 @@ export default function App() {
                 >
                     <Tab.Screen
                         name="MoviesTab"
-                        component={MoviesStack} // ✅ use stack here
+                        component={MoviesStack} // ✅ MoviesStack now wrapped in provider
                         options={{
                             tabBarLabel: "Movies",
                             tabBarIcon: () => <Text style={{ fontSize: 18 }}>🎬</Text>,

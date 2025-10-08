@@ -17,7 +17,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const res = await fetch(`${BASE_URL}/users/getUserByEmail/${email}`);
             if (!res.ok) throw new Error("Failed to fetch user");
             const data = await res.json();
-            console.log("Fetched user:", data);
             setUser(data);
         } catch (err) {
             console.error(err);

@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "App";
 import { User } from "./Profile";
 import { useUser } from "context/UserContext";
+import { useMovieCache } from "context/MovieCacheContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -68,31 +69,50 @@ export type MoviesScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 function MoviesScreen() {
+    const { cachedMovies, setCachedMovies, scrollOffset, setScrollOffset } = useMovieCache();
     const { user } = useUser();
-    const [loading, setLoading] = useState(true);
-    const [allMovies, SetAllMovies] = useState<Array<Movie>>([]);
+    const [loading, setLoading] = useState(false);
+    const [allMovies, setAllMovies] = useState<Array<Movie>>(cachedMovies || []);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
     const navigation = useNavigation<MoviesScreenNavigationProp>();
     const BASE_URL = "https://ginglymoid-nguyet-autumnally.ngrok-free.dev"; // replace with your local IP
 
     useEffect(() => {
-        const fetchMovies = async () => {
-            try {
-                setLoading(true);
-                const moviesResponse = await fetch(`${BASE_URL}/movies/all-movies`);
-                if (!moviesResponse.ok) throw new Error("Movies not found");
-                const moviesData = await moviesResponse.json();
-                SetAllMovies(moviesData);
-            } catch (err) {
-                console.error(err);
-                console.log("Failed to fetch movies");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMovies();
+        fetchMovies(1);
     }, []);
+
+    useEffect(() => {
+        setCachedMovies(allMovies);
+    }, [allMovies]);
+
+    const fetchMovies = async (pageNum: number) => {
+        if (loading || !hasMore) {
+            console.log("Blocked: loading:", loading, "hasMore:", hasMore);
+            return;
+        }
+        setLoading(true);
+        try {
+            const url = `${BASE_URL}/movies/all-movies?page=${pageNum}&limit=12`;
+            const res = await fetch(url);
+            const moviesData: Movie[] = await res.json();
+            console.log("Fetched movies:", moviesData.length);
+            if (moviesData.length === 0) {
+                setHasMore(false);
+                return;
+            }
+            setAllMovies((prev) => [...prev, ...moviesData]);
+            setPage((prev) => prev + 1);
+            if (moviesData.length < 12) {
+                setHasMore(false);
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -133,11 +153,22 @@ function MoviesScreen() {
             <FlatList
                 data={allMovies}
                 renderItem={renderGridItem}
-                keyExtractor={(item) => item._id.toString()} // ✅ use _id as key
+                // keyExtractor={(item) => item._id.toString()}
                 numColumns={4}
                 contentContainerStyle={styles.gridContainer}
                 columnWrapperStyle={styles.gridRow}
                 showsVerticalScrollIndicator={false}
+                onEndReached={() => {
+                    if (!loading && hasMore) {
+                        fetchMovies(page);
+                    }
+                }}
+                onEndReachedThreshold={0.2}
+                ListFooterComponent={
+                    loading ? (
+                        <ActivityIndicator size="small" style={{ margin: 20 }} />
+                    ) : null
+                }
             />
         </View>
     );
