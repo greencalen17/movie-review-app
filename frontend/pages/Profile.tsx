@@ -8,11 +8,13 @@ import {
     Dimensions,
     FlatList,
     TouchableOpacity,
+    TextInput,
 } from "react-native";
 import { ObjectId } from "bson";
 import { Movie, MoviesScreenNavigationProp } from "./Movies";
 import { useUser } from "context/UserContext";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface User {
     active_status: boolean;
@@ -40,9 +42,62 @@ const GRID_POSTER_HEIGHT = SCREEN_WIDTH / 4; // maintain aspect ratio
 
 function ProfileScreen() {
     const { user, loading } = useUser();
+    const [currentUser, setCurrentUser] = useState<User | null>(user);
     const [topTenMovies, setTopTenMovies] = useState<Array<Movie>>([]);
+    const [email, setEmail] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
 
     const navigation = useNavigation<MoviesScreenNavigationProp>();
+
+    const handleSignup = async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/users/createUser`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email,
+                    first_name: firstName,
+                    last_name: lastName,
+                    username,
+                    password,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Signup failed");
+
+            await AsyncStorage.setItem("token", data.token);
+            await AsyncStorage.setItem("user", JSON.stringify(data.user));
+            setCurrentUser(data.user);
+        } catch (err) {
+            console.error("Signup error:", err);
+        }
+    };
+
+    const handleLogin = async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/users/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Login failed");
+
+            await AsyncStorage.setItem("token", data.token);
+            await AsyncStorage.setItem("user", JSON.stringify(data.user));
+            setCurrentUser(data.user);
+        } catch (err) {
+            console.error("Login error:", err);
+        }
+    };
+
+    const handleSignOut = async () => {
+        await AsyncStorage.removeItem("user");
+        setCurrentUser(null);
+    };
 
     if (loading) {
         return (
@@ -51,10 +106,49 @@ function ProfileScreen() {
             </View>
         );
     }
+    
     if (!user) {
         return (
             <View style={styles.center}>
-                <Text>User not found 😢</Text>
+                <Text style={styles.header}>Login / Signup</Text>
+                <TextInput
+                    placeholder="Email"
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                />
+                <TextInput
+                    placeholder="First Name (for signup)"
+                    style={styles.input}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                />
+                <TextInput
+                    placeholder="Last Name (for signup)"
+                    style={styles.input}
+                    value={lastName}
+                    onChangeText={setLastName}
+                />
+                <TextInput
+                    placeholder="Username (for signup)"
+                    style={styles.input}
+                    value={username}
+                    onChangeText={setUsername}
+                />
+                <TextInput
+                    placeholder="Password"
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+                <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                    <Text style={styles.buttonText}>Login</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.buttonSecondary} onPress={handleSignup}>
+                    <Text style={styles.buttonText}>Sign Up</Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -89,6 +183,16 @@ function ProfileScreen() {
 
     return (
         <View style={styles.container}>
+            {/* Sign Out Button */}
+            <View style={{ marginTop: 20, alignItems: "center" }}>
+                <TouchableOpacity
+                    style={[styles.buttonSecondary, { backgroundColor: "#d9534f" }]}
+                    onPress={handleSignOut}
+                >
+                    <Text style={styles.buttonText}>Sign Out</Text>
+                </TouchableOpacity>
+            </View>
+
             {/* Profile Picture & Info */}
             <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
                 {user.profile_pic && (
@@ -274,6 +378,38 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        padding: 10,
+        marginVertical: 8,
+        borderRadius: 8,
+        width: "80%",
+    },
+    button: {
+        backgroundColor: "#007BFF",
+        padding: 12,
+        borderRadius: 8,
+        marginVertical: 6,
+        width: "80%",
+        alignItems: "center",
+    },
+    buttonSecondary: {
+        backgroundColor: "#6c757d",
+        padding: 12,
+        borderRadius: 8,
+        marginVertical: 6,
+        width: "80%",
+        alignItems: "center",
+    },
+    buttonText: {
+        color: "#fff",
+        fontWeight: "bold",
+    },
+    header: {
+        fontSize: 22,
+        marginBottom: 20,
     },
 });
 
